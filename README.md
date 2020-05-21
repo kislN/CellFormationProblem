@@ -1,1 +1,1 @@
-# Implementation algorithms for the cell formation problem
+# Implementation of algorithms for the cell formation problem
