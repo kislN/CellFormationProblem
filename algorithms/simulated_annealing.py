@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Annealing:
 
     def __init__(self, matrix, temperature=0.8):
@@ -16,6 +17,7 @@ class Annealing:
                 set_j = set(np.where(self.matrix[:, j] == 1)[0])
                 B[i, j] = B[j, i] = len(set_i & set_j) / \
                                     (len(set_i & set_j) + len(set_i - set_j) + len(set_j - set_i))
+
 
     def update_temperature(self, a):
         self.temperature *= a
