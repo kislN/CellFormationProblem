@@ -14,14 +14,26 @@ def get_data(file_name):
         case_dict['m'] = int(sizes[0])
         case_dict['p'] = int(sizes[1])
         adj_matrix = np.zeros((case_dict['m'], case_dict['p']))
+
         for m, line in enumerate(data):
             line = np.asarray(line.split(' '))
             del_ind = np.where(line == '')[0].tolist()
             line = np.delete(line, [0] + del_ind)
-
             for p in line:
                 adj_matrix[m, int(p)-1] = 1
+
         case_dict['adj_matrix'] = adj_matrix
+        machines = []
+        parts = []
+
+        for machine in adj_matrix:
+            machines.append(set(np.where(machine == 1)[0]))
+
+        for part in adj_matrix.T:
+            parts.append(set(np.where(part == 1)[0]))
+
+        case_dict['machines'] = machines
+        case_dict['parts'] = parts
 
         print(file_name, ' is done!')
 
