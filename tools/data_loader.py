@@ -13,23 +13,23 @@ def get_data(file_name):
         sizes = data.pop(0).split(' ')
         case_dict['m'] = int(sizes[0])
         case_dict['p'] = int(sizes[1])
-        adj_matrix = np.zeros((case_dict['m'], case_dict['p']))
+        incidence_matrix = np.zeros((case_dict['m'], case_dict['p']))
 
         for m, line in enumerate(data):
             line = np.asarray(line.split(' '))
             del_ind = np.where(line == '')[0].tolist()
             line = np.delete(line, [0] + del_ind)
             for p in line:
-                adj_matrix[m, int(p)-1] = 1
+                incidence_matrix[m, int(p)-1] = 1
 
-        case_dict['adj_matrix'] = adj_matrix
+        case_dict['incidence_matrix'] = incidence_matrix
         machines = []
         parts = []
 
-        for machine in adj_matrix:
+        for machine in incidence_matrix:
             machines.append(set(np.where(machine == 1)[0]))
 
-        for part in adj_matrix.T:
+        for part in incidence_matrix.T:
             parts.append(set(np.where(part == 1)[0]))
 
         case_dict['machines'] = machines
