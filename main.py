@@ -12,10 +12,12 @@ cases = []
 for file in files:
     cases.append(get_data(file))
 
-n = 4
+n = 1
 test = SA(cases[n]['incidence_matrix'], machines=cases[n]['machines'], parts=cases[n]['parts'])
 
 test.run()
+print(test.C_best)
+print(test.obj_best)
 
 print()
 

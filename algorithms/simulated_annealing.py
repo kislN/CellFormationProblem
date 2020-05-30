@@ -47,6 +47,9 @@ class Annealing:
         self._counter_trapped = None
         self._counter_stagnant = None
 
+    def obj_function(self, n1_out, n0_in):
+        return (self.n_ones - n1_out) / (self.n_ones + n0_in)
+
     def get_similar_list(self):
         similar_dict = {}
         for i in range(self.p):
@@ -58,8 +61,26 @@ class Annealing:
         similar_list = sorted(similar_dict.items(), key=lambda x: x[1], reverse=True)
         return similar_list
 
-    def obj_function(self, n1_out, n0_in):
-        return (self.n_ones - n1_out) / (self.n_ones + n0_in)
+    def initial_solution(self):
+        p_clusters = np.array([None] * self.p)
+        num_cluster = 0
+        p_counter = 0
+        for p_pair in self.similar_list:
+            if p_counter != self.p:
+                if p_clusters[p_pair[0][0]] is None and p_clusters[p_pair[0][1]] is None:
+                    p_clusters[p_pair[0][0]] = p_clusters[p_pair[0][1]] = num_cluster
+                    num_cluster = (num_cluster + 1) % self._C
+                    p_counter += 2
+                elif p_clusters[p_pair[0][1]] is None:
+                    p_clusters[p_pair[0][1]] = p_clusters[p_pair[0][0]]
+                    p_counter += 1
+                elif p_clusters[p_pair[0][0]] is None:
+                    p_clusters[p_pair[0][0]] = p_clusters[p_pair[0][1]]
+                    p_counter += 1
+            else:
+                break
+                                                    # TODO: add filling the empty clusters
+        return self.get_m_clusters(p_clusters)
 
     def get_m_clusters(self, p_clusters):
         p_clust_matrix = []
@@ -82,28 +103,6 @@ class Annealing:
             n0_in += len(p_clust_matrix[min_ve_clust] - self.machines[machine])
         return [p_clusters, m_clusters, n1_out, n0_in]
 
-    def initial_solution(self):
-        p_clusters = np.array([None] * self.p)
-        num_cluster = 0
-        p_counter = 0
-        for p_pair in self.similar_list:
-            if p_counter != self.p:
-                if p_clusters[p_pair[0][0]] is None and p_clusters[p_pair[0][1]] is None:
-                    p_clusters[p_pair[0][0]] = p_clusters[p_pair[0][1]] = num_cluster
-                    num_cluster = (num_cluster + 1) % self._C
-                    p_counter += 2
-                elif p_clusters[p_pair[0][1]] is None:
-                    p_clusters[p_pair[0][1]] = p_clusters[p_pair[0][0]]
-                    p_counter += 1
-                elif p_clusters[p_pair[0][0]] is None:
-                    p_clusters[p_pair[0][0]] = p_clusters[p_pair[0][1]]
-                    p_counter += 1
-            else:
-                break
-                                                    # TODO: add filling the empty clusters
-        # n_clust = np.max(p_clusters) + 1
-        return self.get_m_clusters(p_clusters)
-
     def single_move_step(self, part, new_cluster, S):
         p_clusters = copy.deepcopy(S[0])
         m_clusters = copy.deepcopy(S[1])
@@ -118,7 +117,6 @@ class Annealing:
         n1_out = n1_out + len(self.parts[part] & current_clust_machines) - len(self.parts[part] & new_clust_machines)
         n0_in = n0_in + len(new_clust_machines - self.parts[part]) - len(current_clust_machines - self.parts[part])
         return [p_clusters, m_clusters, n1_out, n0_in]
-
 
     def single_move(self, S):
         curr_obj = self.obj_function(S[2], S[3])
@@ -137,7 +135,7 @@ class Annealing:
                     destination_cluster = cluster
         return best_solution, destination_cluster       # TODO: leave it if exchange_move works with this function
 
-    def exchange_move(self, S):       # TODO: test this function
+    def exchange_move(self, S):
         curr_obj = self.obj_function(S[2], S[3])
         best_solution = None
         max_delta = -curr_obj
