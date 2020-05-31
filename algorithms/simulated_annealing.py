@@ -21,7 +21,7 @@ D        D          length of period for evoking exchange-move
 
 class Annealing:
 
-    def __init__(self, incidence_matrix, machines=None, parts=None):
+    def __init__(self, incidence_matrix, machines, parts):
         self.incidence_matrix = incidence_matrix
         self.machines = machines
         self.parts = parts
@@ -79,7 +79,17 @@ class Annealing:
                     p_counter += 1
             else:
                 break
-                                                    # TODO: add filling the empty clusters
+
+        if np.size(np.unique(p_clusters)) != self._C:
+            print('fuck')
+
+        max_cluster = np.max(p_clusters)
+        if max_cluster + 1 != self._C:
+            print('it happened')
+            for i, cluster in enumerate(range(max_cluster + 1, self._C)):
+               part = self.similar_list[-(i + 1)][0][0]
+               p_clusters[part] = cluster
+
         return self.get_m_clusters(p_clusters)
 
     def get_m_clusters(self, p_clusters):
@@ -98,6 +108,10 @@ class Annealing:
                 if min_ve > ve:
                     min_ve = ve
                     min_ve_clust = clust
+                # elif min_ve == ve:
+                #     if np.random.randint(2):
+                #         min_ve = ve
+                #         min_ve_clust = clust
             m_clusters[machine] = min_ve_clust
             n1_out += len(self.machines[machine] - p_clust_matrix[min_ve_clust])
             n0_in += len(p_clust_matrix[min_ve_clust] - self.machines[machine])
@@ -184,10 +198,13 @@ class Annealing:
                     best_solution = new_S
         return best_solution
 
-
     def generate_neighbor(self, S):
         new_S, p, s_c, d_c = self.single_move(S)
-        if self._counter % self.D == 0:
+
+        if np.size(np.unique(new_S[0])) != self._C:
+            print('sheet')
+
+        if self._counter % self.D == 0 or np.size(np.unique(new_S[0])) != self._C:
             new_S = self.exchange_move(new_S, p, s_c, d_c)
 
         new_S = self.get_m_clusters(new_S[0])
