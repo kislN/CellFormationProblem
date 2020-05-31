@@ -3,19 +3,19 @@ import copy
 from tools.decorators import timeit
 
 '''
-mine  article's  meaning 
-S     S          current solution
-S_c   S^c        neighborhood solution
-S_1   S*         best solution found in current number of cells
+mine     article's  meaning 
+S        S          current solution
+S_c      S^c        neighborhood solution
+S_1      S*         best solution found in current number of cells
 S_best   S**        best solution found so far
-T_0   T_0        initial temperature
-T_f   T_f        final temperature
-alpha alpha          cooling rate
-L     L          Markov chain length
-k     k          iteration number
-C     C          initial number of cells
+T_0      T_0        initial temperature
+T_f      T_f        final temperature
+alpha    alpha      cooling rate
+L        L          Markov chain length
+k        k          iteration number
+C        C          initial number of cells
 C_best   C*         optimal number of cells
-D     D          length of period for evoking exchange-move
+D        D          length of period for evoking exchange-move
 '''
 
 
@@ -121,48 +121,81 @@ class Annealing:
     def single_move(self, S):
         curr_obj = self.obj_function(S[2], S[3])
         best_solution = None
-        destination_cluster = None
+        destin = None
+        source = None
         max_delta = -curr_obj
         for part in range(self.p):
             clusters = list(range(self._C))
-            clusters.pop(S[0][part])
+            source = clusters.pop(S[0][part])
             for cluster in clusters:
                 new_S = self.single_move_step(part, cluster, S)
                 delta_obj = self.obj_function(new_S[2], new_S[3]) - curr_obj
                 if delta_obj > max_delta:
                     max_delta = delta_obj
                     best_solution = new_S
-                    destination_cluster = cluster
-        return best_solution, destination_cluster       # TODO: leave it if exchange_move works with this function
+                    destin = cluster
+                    b_part = part
+        return best_solution, b_part, source, destin       # if exchange_move works with this function
 
-    def exchange_move(self, S):
+    # def exchange_move(self, S):           # the longest version
+    #     curr_obj = self.obj_function(S[2], S[3])
+    #     best_solution = None
+    #     max_delta = -curr_obj
+    #     for part in range(self.p):
+    #         clusters = list(range(self._C))
+    #         source_clust = clusters.pop(S[0][part])
+    #         for cluster in clusters:
+    #             exchange_parts = np.where(S[0] == cluster)[0]
+    #             new_S = self.single_move_step(part, cluster, S)
+    #             for exchange_p in exchange_parts:
+    #                 second_new_S = self.single_move_step(exchange_p, source_clust, new_S)
+    #                 delta_obj = self.obj_function(second_new_S[2], second_new_S[3]) - curr_obj
+    #                 if delta_obj > max_delta:
+    #                     max_delta = delta_obj
+    #                     best_solution = second_new_S
+    #     return best_solution
+
+    # def exchange_move(self, S):
+    #     new_S, b_part, source, destin = self.single_move(S)
+    #     curr_obj = self.obj_function(new_S[2], new_S[3])
+    #     best_solution = None
+    #     max_delta = -curr_obj
+    #     exchange_parts = np.where(new_S[0] == destin)[0]
+    #     for part in exchange_parts:
+    #         if part != b_part:
+    #             new_new_S = self.single_move_step(part, source, new_S)
+    #             delta_obj = self.obj_function(new_new_S[2], new_new_S[3]) - curr_obj
+    #             if delta_obj > max_delta:
+    #                 max_delta = delta_obj
+    #                 best_solution = new_new_S
+    #     return best_solution
+
+    def exchange_move(self, S, swapped_part, source, destin):
         curr_obj = self.obj_function(S[2], S[3])
         best_solution = None
         max_delta = -curr_obj
-        for part in range(self.p):
-            clusters = list(range(self._C))
-            source_clust = clusters.pop(S[0][part])
-            for cluster in clusters:
-                exchange_parts = np.where(S[0] == cluster)[0]
-                new_S = self.single_move_step(part, cluster, S)
-                for exchange_p in exchange_parts:
-                    second_new_S = self.single_move_step(exchange_p, source_clust, new_S)
-                    delta_obj = self.obj_function(second_new_S[2], second_new_S[3]) - curr_obj
-                    if delta_obj > max_delta:
-                        max_delta = delta_obj
-                        best_solution = second_new_S
+        exchange_parts = np.where(S[0] == destin)[0]
+        for part in exchange_parts:
+            if part != swapped_part:
+                new_S = self.single_move_step(part, source, S)
+                delta_obj = self.obj_function(new_S[2], new_S[3]) - curr_obj
+                if delta_obj > max_delta:
+                    max_delta = delta_obj
+                    best_solution = new_S
         return best_solution
 
-    def generate_neighbor(self, S, counter):
-        new_S, d_c = self.single_move(S)
-        if counter % self.D == 0:
-            new_S = self.exchange_move(new_S)
+
+    def generate_neighbor(self, S):
+        new_S, p, s_c, d_c = self.single_move(S)
+        if self._counter % self.D == 0:
+            new_S = self.exchange_move(new_S, p, s_c, d_c)
+
         new_S = self.get_m_clusters(new_S[0])
         return new_S
 
     def inside_loop(self):
         while self._counter_MC < self.L and self._counter_trapped < self.L/2:
-            S_c = self.generate_neighbor(self._S, self._counter)
+            S_c = self.generate_neighbor(self._S)
 
             obj_S_c = self.obj_function(S_c[2], S_c[3])
             obj_S_1 = self.obj_function(self._S_1[2], self._S_1[3])
@@ -190,10 +223,9 @@ class Annealing:
 
             self._counter_MC += 1
 
-
-    @timeit
-    def run(self, T_0=10, T_f=0.002, alpha=0.7, L=10, D=18, check=4):
-        self._C = 2
+    # @timeit
+    def run(self, C=2, T_0=10, T_f=0.002, alpha=0.7, L=10, D=18, check=4):
+        self._C = C
 
         self.L = L
         self.D = D
