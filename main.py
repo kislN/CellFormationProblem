@@ -3,7 +3,8 @@ import os
 from algorithms.simulated_annealing import Annealing as SA
 import numpy as np
 from tools.measures import get_all_results
-from tools.check_result import check
+from tools.check_result import check, get_res
+
 
 np.random.seed(41)
 
@@ -14,13 +15,16 @@ cases = []
 for file in files:
     cases.append(get_data(file))
 
-df = get_all_results(cases)
+df = get_all_results(cases[:5])
 
-# n = 3
+# n = 0
 # test = SA(cases[n]['incidence_matrix'], machines=cases[n]['machines'], parts=cases[n]['parts'])
-# test.run(C=11)
-#
-# mat, eff = check(cases[n]['incidence_matrix'], test.S_best[1], test.S_best[0])
+# test.run(C=8)
+
+for n in range(5):
+    m, p = get_res('./data/solutions/' + cases[n]['file_name'][:5] + '.sol')
+    mat, eff = check(cases[n]['incidence_matrix'], m, p)
+    print(cases[n]['file_name'][:5], ': ', eff)
 
 print()
 print(df)

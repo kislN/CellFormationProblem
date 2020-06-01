@@ -83,9 +83,20 @@ class Annealing:
         max_cluster = np.max(p_clusters)
         if max_cluster + 1 != self._C:
             print('it happened')
-            for i, cluster in enumerate(range(max_cluster + 1, self._C)):
-               part = self.similar_list[-(i + 1)][0][0]
-               p_clusters[part] = cluster
+            used_parts = []
+            i = 0
+            for cluster in range(max_cluster + 1, self._C):
+                while True:
+                    part = self.similar_list[-(i + 1)][0][0]
+                    if part in used_parts:
+                        i += 1
+                        continue
+                    p_clusters[part] = cluster
+                    used_parts.append(part)
+                    break
+
+        if np.size(np.unique(p_clusters)) != self._C:
+            print('oooooh sheeet')
 
         return self.get_m_clusters(p_clusters)
 
@@ -151,8 +162,8 @@ class Annealing:
             n1_out += len(self.machines[machine] - p_clust_matrix[m_clusters[machine]])
             n0_in += len(p_clust_matrix[m_clusters[machine]] - self.machines[machine])
 
-        # if np.size(np.unique(m_clusters)) != self._C:
-        #     print('ooooh fuck')
+        if np.size(np.unique(m_clusters)) != self._C:
+            print('ooooh fuck')
         return [p_clusters, m_clusters, n1_out, n0_in]
 
     def single_move_step(self, part, new_cluster, S):
@@ -242,7 +253,14 @@ class Annealing:
         if self._counter % self.D == 0 or np.size(np.unique(new_S[0])) != self._C:
             new_S = self.exchange_move(new_S, part, source, destin)
 
+        if np.size(np.unique(new_S[0])) != self._C:
+            print('ohhhhhh noooo')
+
         new_S = self.get_m_clusters(new_S[0])
+
+        if np.size(np.unique(new_S[0])) != np.size(np.unique(new_S[1])):
+            print('You are asshole')
+
         return new_S
 
     def inside_loop(self):
@@ -309,6 +327,8 @@ class Annealing:
                 self.obj_best = self.obj_function(self.S_best[2], self.S_best[3])
                 self.C_best = self._C
                 self._C += 1
+                if self._C > self.m:
+                    break
                 self._S = self.initial_solution()        # with new number of clusters
                 self._S_1 = copy.deepcopy(self._S)
             else:
