@@ -24,38 +24,37 @@ def get_result(case, iterations=3, **params):
     return (delta_time, efficacy, clusters, solution)
 
 def get_all_results(cases):
-    path = './data'
     df = pd.DataFrame(columns=['case', 'C', 'T0', 'Tf', 'alpha', 'L', 'D', 'check', 'mean_time', 'efficacy', 'clusters'])
     check = 4
     T_f = 0.002
-    iters = 1
+    iters = 2
     for case in tqdm(cases):
         best_effic = 0
-        best_clusters = 0
         best_solution = None
-        for C in range(2, 9, 4):
-            for T_0 in [10, 30]: #[10, 30, 50]:
-                for alpha in [0.7]: #[0.7, 0.8, 0.9]:
-                    for L in [10]: #[10, 30, 70]:
-                        for D in [6, 18]: #[6, 12, 18]:
-                            result = get_result(case, iterations=iters, C=C, T_0=T_0, T_f=T_f, alpha=alpha, L=L, D=D, check=check)
+        for C in range(2, 3):
+            for T_0 in [10, 30, 50]:
+                for alpha in [0.7, 0.8, 0.9]:
+                    for L in [10, 30, 70]:
+                        for D in [6, 12, 18]:
+                            result = get_result(case, iterations=iters, C=C, T_0=T_0, T_f=T_f,
+                                                alpha=alpha, L=L, D=D, check=check)
                             df = df.append(pd.Series([case['file_name'], C, T_0, T_f, alpha, L, D, check, result[0],
                                                       result[1], result[2]], index=df.columns), ignore_index=True)
                             if best_effic < result[1]:
                                 best_effic = result[1]
-                                best_clusters = result[2]
                                 best_solution = result[3]
-
-        file_name = case['file_name'][:5] + '.sol'
-        sol_str = ''
-        for i in range(case['m']):
-            sol_str += str(i + 1) + '_' + str(best_solution[1][i]) + ' '
-        sol_str += '\n'
-        for i in range(case['p']):
-            sol_str += str(i + 1) + '_' + str(best_solution[0][i]) + ' '
-        with open(join(path, 'solutions', file_name), 'w') as file:
-            file.write(sol_str)
-
-    df.to_csv(join(path, 'results.csv'))
-
+        write_result(case, best_solution)
+    df.to_csv('./data/results.csv')
     return df
+
+def write_result(case, best_solution):
+    path = './data'
+    file_name = case['file_name'][:5] + '.sol'
+    sol_str = ''
+    for i in range(case['m']):
+        sol_str += str(i + 1) + '_' + str(best_solution[1][i]) + ' '
+    sol_str += '\n'
+    for i in range(case['p']):
+        sol_str += str(i + 1) + '_' + str(best_solution[0][i]) + ' '
+    with open(join(path, 'solutions', file_name), 'w') as file:
+        file.write(sol_str)

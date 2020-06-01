@@ -80,12 +80,11 @@ class Annealing:
             else:
                 break
 
-        max_cluster = np.max(p_clusters)
-        if max_cluster + 1 != self._C:
-            print('it happened')
+        n_clust = np.max(p_clusters) + 1
+        if n_clust != self._C:
             used_parts = []
             i = 0
-            for cluster in range(max_cluster + 1, self._C):
+            for cluster in range(n_clust, self._C):
                 while True:
                     part = self.similar_list[-(i + 1)][0][0]
                     if part in used_parts:
@@ -99,29 +98,6 @@ class Annealing:
             print('oooooh sheeet')
 
         return self.get_m_clusters(p_clusters)
-
-    # def get_m_clusters(self, p_clusters):
-    #     p_clust_matrix = []
-    #     for i in range(self._C):
-    #         p_clust_matrix.append(set(np.where(p_clusters == i)[0]))
-    #
-    #     m_clusters = np.asarray([None] * self.m)
-    #     n1_out = 0
-    #     n0_in = 0
-    #     for machine in range(self.m):
-    #         min_ve = self.p + 1
-    #         min_ve_clust = None
-    #         for clust in range(self._C):
-    #             ve = len(p_clust_matrix[clust] - self.machines[machine]) + \
-    #                  len(self.machines[machine] - p_clust_matrix[clust])
-    #             if min_ve > ve:
-    #                 min_ve = ve
-    #                 min_ve_clust = clust
-    #         m_clusters[machine] = min_ve_clust
-    #         n1_out += len(self.machines[machine] - p_clust_matrix[min_ve_clust])
-    #         n0_in += len(p_clust_matrix[min_ve_clust] - self.machines[machine])
-    #
-    #     return [p_clusters, m_clusters, n1_out, n0_in]
 
     def get_m_clusters(self, p_clusters):
         p_clust_matrix = []
@@ -144,9 +120,9 @@ class Annealing:
             m_clusters[machine] = min_ve_clust
             clust_count[min_ve_clust] += 1
 
-        diff = np.setdiff1d(np.arange(self._C), np.unique(m_clusters))
-        if np.size(diff):
-            for clust in diff:
+        diff_clust = np.setdiff1d(np.arange(self._C), np.unique(m_clusters))
+        if np.size(diff_clust):
+            for clust in diff_clust:
                 while True:
                     min_ve_machine = np.argmin(matrix_ve.T[clust])
                     matrix_ve[min_ve_machine, clust] = self.p + 1
