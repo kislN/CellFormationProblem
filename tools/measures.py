@@ -37,7 +37,7 @@ def get_all_results(cases):
         for T_0 in [10]: #[10, 30, 50]:
             for alpha in [0.7]: #[0.7, 0.8, 0.9]:
                 for L in [10]: #[10, 30, 70]:
-                    for D in [18]: #[6, 12, 18]:
+                    for D in [6]: #[6, 12, 18]:
                         result = get_result(case, iterations=iters, C=C, T_0=T_0, T_f=T_f, alpha=alpha, L=L, D=D, check=check)
                         df = df.append(pd.Series([case['file_name'], C, T_0, T_f, alpha, L, D, check, result[0],
                                                   result[1], result[2]], index=df.columns), ignore_index=True)

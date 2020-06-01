@@ -80,9 +80,6 @@ class Annealing:
             else:
                 break
 
-        if np.size(np.unique(p_clusters)) != self._C:
-            print('fuck')
-
         max_cluster = np.max(p_clusters)
         if max_cluster + 1 != self._C:
             print('it happened')
@@ -92,29 +89,70 @@ class Annealing:
 
         return self.get_m_clusters(p_clusters)
 
+    # def get_m_clusters(self, p_clusters):
+    #     p_clust_matrix = []
+    #     for i in range(self._C):
+    #         p_clust_matrix.append(set(np.where(p_clusters == i)[0]))
+    #
+    #     m_clusters = np.asarray([None] * self.m)
+    #     n1_out = 0
+    #     n0_in = 0
+    #     for machine in range(self.m):
+    #         min_ve = self.p + 1
+    #         min_ve_clust = None
+    #         for clust in range(self._C):
+    #             ve = len(p_clust_matrix[clust] - self.machines[machine]) + \
+    #                  len(self.machines[machine] - p_clust_matrix[clust])
+    #             if min_ve > ve:
+    #                 min_ve = ve
+    #                 min_ve_clust = clust
+    #         m_clusters[machine] = min_ve_clust
+    #         n1_out += len(self.machines[machine] - p_clust_matrix[min_ve_clust])
+    #         n0_in += len(p_clust_matrix[min_ve_clust] - self.machines[machine])
+    #
+    #     return [p_clusters, m_clusters, n1_out, n0_in]
+
     def get_m_clusters(self, p_clusters):
         p_clust_matrix = []
         for i in range(self._C):
             p_clust_matrix.append(set(np.where(p_clusters == i)[0]))
+
         m_clusters = np.asarray([None] * self.m)
-        n1_out = 0
-        n0_in = 0
+        matrix_ve = np.zeros((self.m, self._C))
+        clust_count = np.zeros((self._C))
         for machine in range(self.m):
             min_ve = self.p + 1
-            min_ve_clust = 0
+            min_ve_clust = None
             for clust in range(self._C):
                 ve = len(p_clust_matrix[clust] - self.machines[machine]) + \
-                     len(self.machines[machine] - p_clust_matrix[clust])
+                                            len(self.machines[machine] - p_clust_matrix[clust])
+                matrix_ve[machine, clust] = ve
                 if min_ve > ve:
                     min_ve = ve
                     min_ve_clust = clust
-                # elif min_ve == ve:
-                #     if np.random.randint(2):
-                #         min_ve = ve
-                #         min_ve_clust = clust
             m_clusters[machine] = min_ve_clust
-            n1_out += len(self.machines[machine] - p_clust_matrix[min_ve_clust])
-            n0_in += len(p_clust_matrix[min_ve_clust] - self.machines[machine])
+            clust_count[min_ve_clust] += 1
+
+        diff = np.setdiff1d(np.arange(self._C), np.unique(m_clusters))
+        if np.size(diff):
+            for clust in diff:
+                while True:
+                    min_ve_machine = np.argmin(matrix_ve.T[clust])
+                    matrix_ve[min_ve_machine, clust] = self.p + 1
+                    if clust_count[m_clusters[min_ve_machine]] > 1:
+                        clust_count[m_clusters[min_ve_machine]] -= 1
+                        m_clusters[min_ve_machine] = clust
+                        clust_count[clust] += 1
+                        break
+
+        n1_out = 0
+        n0_in = 0
+        for machine in range(self.m):
+            n1_out += len(self.machines[machine] - p_clust_matrix[m_clusters[machine]])
+            n0_in += len(p_clust_matrix[m_clusters[machine]] - self.machines[machine])
+
+        # if np.size(np.unique(m_clusters)) != self._C:
+        #     print('ooooh fuck')
         return [p_clusters, m_clusters, n1_out, n0_in]
 
     def single_move_step(self, part, new_cluster, S):
@@ -135,21 +173,22 @@ class Annealing:
     def single_move(self, S):
         curr_obj = self.obj_function(S[2], S[3])
         best_solution = None
-        destin = None
         source = None
+        destin = None
         max_delta = -curr_obj
         for part in range(self.p):
             clusters = list(range(self._C))
-            source = clusters.pop(S[0][part])
+            s_clust = clusters.pop(S[0][part])
             for cluster in clusters:
                 new_S = self.single_move_step(part, cluster, S)
                 delta_obj = self.obj_function(new_S[2], new_S[3]) - curr_obj
                 if delta_obj > max_delta:
                     max_delta = delta_obj
                     best_solution = new_S
+                    source = s_clust
                     destin = cluster
                     b_part = part
-        return best_solution, b_part, source, destin       # if exchange_move works with this function
+        return best_solution, b_part, source, destin
 
     # def exchange_move(self, S):           # the longest version
     #     curr_obj = self.obj_function(S[2], S[3])
@@ -199,13 +238,9 @@ class Annealing:
         return best_solution
 
     def generate_neighbor(self, S):
-        new_S, p, s_c, d_c = self.single_move(S)
-
-        if np.size(np.unique(new_S[0])) != self._C:
-            print('sheet')
-
+        new_S, part, source, destin = self.single_move(S)
         if self._counter % self.D == 0 or np.size(np.unique(new_S[0])) != self._C:
-            new_S = self.exchange_move(new_S, p, s_c, d_c)
+            new_S = self.exchange_move(new_S, part, source, destin)
 
         new_S = self.get_m_clusters(new_S[0])
         return new_S
