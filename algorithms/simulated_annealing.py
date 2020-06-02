@@ -94,9 +94,6 @@ class Annealing:
                     used_parts.append(part)
                     break
 
-        if np.size(np.unique(p_clusters)) != self._C:
-            print('oooooh sheeet')
-
         return self.get_m_clusters(p_clusters)
 
     def get_m_clusters(self, p_clusters):
@@ -138,8 +135,6 @@ class Annealing:
             n1_out += len(self.machines[machine] - p_clust_matrix[m_clusters[machine]])
             n0_in += len(p_clust_matrix[m_clusters[machine]] - self.machines[machine])
 
-        if np.size(np.unique(m_clusters)) != self._C:
-            print('ooooh fuck')
         return [p_clusters, m_clusters, n1_out, n0_in]
 
     def single_move_step(self, part, new_cluster, S):
@@ -195,21 +190,6 @@ class Annealing:
     #                     best_solution = second_new_S
     #     return best_solution
 
-    # def exchange_move(self, S):
-    #     new_S, b_part, source, destin = self.single_move(S)
-    #     curr_obj = self.obj_function(new_S[2], new_S[3])
-    #     best_solution = None
-    #     max_delta = -curr_obj
-    #     exchange_parts = np.where(new_S[0] == destin)[0]
-    #     for part in exchange_parts:
-    #         if part != b_part:
-    #             new_new_S = self.single_move_step(part, source, new_S)
-    #             delta_obj = self.obj_function(new_new_S[2], new_new_S[3]) - curr_obj
-    #             if delta_obj > max_delta:
-    #                 max_delta = delta_obj
-    #                 best_solution = new_new_S
-    #     return best_solution
-
     def exchange_move(self, S, swapped_part, source, destin):
         curr_obj = self.obj_function(S[2], S[3])
         best_solution = None
@@ -228,21 +208,12 @@ class Annealing:
         new_S, part, source, destin = self.single_move(S)
         if self._counter % self.D == 0 or np.size(np.unique(new_S[0])) != self._C:
             new_S = self.exchange_move(new_S, part, source, destin)
-
-        if np.size(np.unique(new_S[0])) != self._C:
-            print('ohhhhhh noooo')
-
         new_S = self.get_m_clusters(new_S[0])
-
-        if np.size(np.unique(new_S[0])) != np.size(np.unique(new_S[1])):
-            print('You are asshole')
-
         return new_S
 
     def inside_loop(self):
         while self._counter_MC < self.L and self._counter_trapped < self.L/2:
             S_c = self.generate_neighbor(self._S)
-
             obj_S_c = self.obj_function(S_c[2], S_c[3])
             obj_S_1 = self.obj_function(self._S_1[2], self._S_1[3])
 
@@ -272,13 +243,11 @@ class Annealing:
     # @timeit
     def run(self, C=2, T_0=10, T_f=0.002, alpha=0.7, L=10, D=18, check=4):
         self._C = C
-
         self.L = L
         self.D = D
 
         self._S = self.initial_solution()
         self._S_1 = copy.deepcopy(self._S)
-
         self.S_best = copy.deepcopy(self._S_1)
         self.obj_best = self.obj_function(self.S_best[2], self.S_best[3])
         self.C_best = self._C

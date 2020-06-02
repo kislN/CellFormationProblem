@@ -27,7 +27,7 @@ def get_all_results(cases):
     df = pd.DataFrame(columns=['case', 'C', 'T0', 'Tf', 'alpha', 'L', 'D', 'check', 'mean_time', 'efficacy', 'clusters'])
     check = 4
     T_f = 0.002
-    iters = 2
+    iters = 10
     for case in tqdm(cases):
         best_effic = 0
         best_solution = None

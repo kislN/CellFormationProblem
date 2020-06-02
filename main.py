@@ -15,18 +15,11 @@ cases = []
 for file in files:
     cases.append(get_data(file))
 
-df = get_all_results(cases[:5])
-
-# n = 0
-# test = SA(cases[n]['incidence_matrix'], machines=cases[n]['machines'], parts=cases[n]['parts'])
-# test.run(C=8)
-
 for n in range(5):
     m, p = get_res('./data/solutions/' + cases[n]['file_name'][:5] + '.sol')
     mat, eff = check(cases[n]['incidence_matrix'], m, p)
     print(cases[n]['file_name'][:5], ': ', eff)
 
-print()
-print(df)
+
 
 
