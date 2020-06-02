@@ -5,12 +5,10 @@ import numpy as np
 from tools.measures import get_all_results
 from tools.check_result import check, get_res
 
-
 np.random.seed(41)
 
 files = os.listdir('./data/cfp_data')
 files.sort()
-
 cases = []
 for file in files:
     cases.append(get_data(file))
